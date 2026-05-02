@@ -247,13 +247,14 @@ SPAM_BURST_WINDOW_SECONDS=10
 SPAM_BURST_MAX_MESSAGES=5
 ```
 
-For the deployed GenLayer Studio Network contract, set:
+The values above target a local GenLayer simulator. For the deployed GenLayer Studio Network contract, use the Studio RPC and deployed address together:
 
 ```env
+GENLAYER_RPC_URL=https://studio.genlayer.com/api
 NOMI_SINGULARITY_CONTRACT_ADDRESS=0x77319Ec77bAA4aA850518BEf2EcCB8e63f7d6Db3
 ```
 
-Use the RPC URL that matches the network you are targeting.
+Always keep `GENLAYER_RPC_URL` and `NOMI_SINGULARITY_CONTRACT_ADDRESS` on the same network.
 
 ## Database
 
