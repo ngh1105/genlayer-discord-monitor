@@ -10,14 +10,19 @@
     "deploy:commands": "node src/commands/deploy.js",
     "test": "node test/smoke.js"
   },
-  "keywords": ["discord", "genlayer", "contribution", "monitor"],
+  "keywords": [
+    "discord",
+    "genlayer",
+    "contribution",
+    "monitor"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.7.0",
     "better-sqlite3": "^11.0.0",
     "discord.js": "^14.0.0",
     "dotenv": "^16.0.0",
+    "genlayer-js": "^1.1.7",
     "node-cron": "^3.0.0"
   }
 }

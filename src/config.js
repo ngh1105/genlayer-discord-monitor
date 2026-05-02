@@ -15,7 +15,9 @@ module.exports = {
   DATABASE_PATH: process.env.DATABASE_PATH || './data/monitor.db',
 
   // GenLayer
+  GENLAYER_NETWORK: process.env.GENLAYER_NETWORK || '',
   GENLAYER_RPC_URL: process.env.GENLAYER_RPC_URL || 'http://localhost:4000/api',
+  GENLAYER_PRIVATE_KEY: process.env.GENLAYER_PRIVATE_KEY || '',
   NOMI_SINGULARITY_CONTRACT_ADDRESS: process.env.NOMI_SINGULARITY_CONTRACT_ADDRESS || '',
 
   // Channel IDs

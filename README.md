@@ -198,6 +198,7 @@ Member commands:
 - Discord bot token
 - SQLite-compatible local filesystem
 - GenLayer CLI, for contract deployment/testing
+- GenLayer JS SDK, used by the bot backend for contract reads and writes
 - Python 3.12+, for contract compile checks
 - GenVM linter, for contract validation
 
@@ -232,7 +233,9 @@ DISCORD_GUILD_ID=
 
 DATABASE_PATH=./data/monitor.db
 
+GENLAYER_NETWORK=localnet
 GENLAYER_RPC_URL=http://localhost:4000/api
+GENLAYER_PRIVATE_KEY=
 NOMI_SINGULARITY_CONTRACT_ADDRESS=
 
 ADMIN_ALERT_CHANNEL_ID=
@@ -251,10 +254,13 @@ The values above target a local GenLayer simulator. For the deployed GenLayer St
 
 ```env
 GENLAYER_RPC_URL=https://studio.genlayer.com/api
+GENLAYER_NETWORK=studionet
 NOMI_SINGULARITY_CONTRACT_ADDRESS=0x77319Ec77bAA4aA850518BEf2EcCB8e63f7d6Db3
 ```
 
 Always keep `GENLAYER_RPC_URL` and `NOMI_SINGULARITY_CONTRACT_ADDRESS` on the same network.
+
+`GENLAYER_PRIVATE_KEY` is required when the bot sends write transactions, such as `select_winner()` or `evaluate_post()`. Read-only calls such as `get_evaluation()` do not need it.
 
 ## Database
 
