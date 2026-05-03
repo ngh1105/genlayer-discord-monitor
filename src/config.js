@@ -20,6 +20,13 @@ module.exports = {
   GENLAYER_PRIVATE_KEY: process.env.GENLAYER_PRIVATE_KEY || '',
   NOMI_SINGULARITY_CONTRACT_ADDRESS: process.env.NOMI_SINGULARITY_CONTRACT_ADDRESS || '',
 
+  // Web dashboard
+  WEB_DASHBOARD_ENABLED: process.env.WEB_DASHBOARD_ENABLED === 'true',
+  WEB_PORT: parseInt(process.env.WEB_PORT || '3000', 10),
+  WEB_BIND_HOST: process.env.WEB_BIND_HOST || '127.0.0.1',
+  WEB_PUBLIC_URL: process.env.WEB_PUBLIC_URL || '',
+  WEB_ADMIN_TOKEN: process.env.WEB_ADMIN_TOKEN || '',
+
   // Channel IDs
   ADMIN_ALERT_CHANNEL_ID: process.env.ADMIN_ALERT_CHANNEL_ID || '',
   PROJECT_POST_CHANNEL_IDS: commaSplit(process.env.PROJECT_POST_CHANNEL_IDS),

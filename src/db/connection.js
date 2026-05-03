@@ -24,8 +24,21 @@ function getDb() {
   // Initialize schema
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   db.exec(schema);
+  applyMigrations(db);
 
   return db;
+}
+
+function applyMigrations(database) {
+  ensureColumn(database, 'genlayer_evaluations', 'source', "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(database, 'genlayer_evaluations', 'error_message', "TEXT NOT NULL DEFAULT ''");
+}
+
+function ensureColumn(database, tableName, columnName, definition) {
+  const columns = database.prepare(`PRAGMA table_info(${tableName})`).all();
+  if (!columns.some(column => column.name === columnName)) {
+    database.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+  }
 }
 
 /**

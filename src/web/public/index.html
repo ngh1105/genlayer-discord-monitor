@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GenLayer Monitor</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">G</div>
+        <div>
+          <h1>GenLayer Monitor</h1>
+          <p>Discord contribution operations</p>
+        </div>
+      </div>
+
+      <nav class="tabs" aria-label="Dashboard sections">
+        <button class="tab is-active" data-tab="leaderboard">Leaderboard</button>
+        <button class="tab" data-tab="logs">Logs</button>
+        <button class="tab" data-tab="proofs">Proofs</button>
+        <button class="tab" data-tab="health">Role Health</button>
+        <button class="tab" data-tab="genlayer">GenLayer</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2>Community Health</h2>
+          <p id="summaryLine">Loading dashboard data...</p>
+        </div>
+        <div class="filters">
+          <label>
+            Month
+            <input id="monthInput" type="month">
+          </label>
+          <label>
+            Role
+            <select id="roleInput">
+              <option>Brain</option>
+              <option>Neurocreative</option>
+              <option>Singularity</option>
+              <option>All</option>
+            </select>
+          </label>
+          <button id="refreshButton" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <section class="summary-grid" aria-label="Summary">
+        <div class="metric">
+          <span>Total Users</span>
+          <strong id="metricUsers">0</strong>
+        </div>
+        <div class="metric">
+          <span>Meaningful Messages</span>
+          <strong id="metricMeaningful">0</strong>
+        </div>
+        <div class="metric">
+          <span>Spam Flags</span>
+          <strong id="metricSpam">0</strong>
+        </div>
+        <div class="metric">
+          <span>Pending Proofs</span>
+          <strong id="metricProofs">0</strong>
+        </div>
+        <div class="metric metric-wide">
+          <span>Latest GenLayer Result</span>
+          <strong id="metricGenLayer">None</strong>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="leaderboard">
+        <div class="panel-head">
+          <h3>Leaderboard</h3>
+          <p>Monthly ranking uses the same scoring inputs as Nomi Singularity.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>User</th>
+                <th>Score</th>
+                <th>Meaningful</th>
+                <th>Active</th>
+                <th>Focus</th>
+                <th>Posts</th>
+                <th>Contest</th>
+                <th>Bonus</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel is-hidden" data-panel="logs">
+        <div class="panel-head">
+          <h3>Logs</h3>
+          <p>Recent tracked Discord messages and spam signals.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Channel</th>
+                <th>Length</th>
+                <th>Meaningful</th>
+                <th>Spam</th>
+                <th>Hash</th>
+              </tr>
+            </thead>
+            <tbody id="logRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel is-hidden" data-panel="proofs">
+        <div class="panel-head split">
+          <div>
+            <h3>Proofs</h3>
+            <p>X posts, builder proofs, and admin bonus records.</p>
+          </div>
+          <label>
+            Status
+            <select id="proofStatusInput">
+              <option>pending</option>
+              <option>approved</option>
+              <option>rejected</option>
+              <option>all</option>
+            </select>
+          </label>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Points</th>
+                <th>URL</th>
+                <th>Reviewed By</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="proofRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel is-hidden" data-panel="health">
+        <div class="panel-head">
+          <h3>Role Health</h3>
+          <p>Latest report per user for the selected role and month.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Risk</th>
+                <th>Reason</th>
+                <th>Metrics</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="healthRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel is-hidden" data-panel="genlayer">
+        <div class="panel-head">
+          <h3>GenLayer</h3>
+          <p>Stored intelligent contract evaluation results.</p>
+          <div id="genlayerHealth" class="health-line">Loading GenLayer health...</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Created</th>
+                <th>Evaluation ID</th>
+                <th>Task</th>
+                <th>Confidence</th>
+                <th>Tx Hash</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="genlayerRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast is-hidden" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

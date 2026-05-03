@@ -3,12 +3,48 @@ const { getDb } = require('../db/connection');
 /**
  * Store a GenLayer evaluation result.
  */
-function saveEvaluation({ evaluationId, taskType, month, inputSummary, result, confidence, txHash }) {
+function parseJson(value) {
+  try {
+    return JSON.parse(value || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function hydrate(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    input_summary: parseJson(row.input_summary_json),
+    result: parseJson(row.result_json),
+  };
+}
+
+function saveEvaluation({
+  evaluationId,
+  taskType,
+  month,
+  inputSummary,
+  result,
+  confidence,
+  txHash,
+  source = '',
+  errorMessage = '',
+}) {
   const db = getDb();
   db.prepare(`
     INSERT INTO genlayer_evaluations
-      (evaluation_id, task_type, month, input_summary_json, result_json, confidence, tx_hash)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+      (evaluation_id, task_type, month, input_summary_json, result_json, confidence, tx_hash, source, error_message)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(evaluation_id) DO UPDATE SET
+      task_type = excluded.task_type,
+      month = excluded.month,
+      input_summary_json = excluded.input_summary_json,
+      result_json = excluded.result_json,
+      confidence = excluded.confidence,
+      tx_hash = COALESCE(excluded.tx_hash, genlayer_evaluations.tx_hash),
+      source = excluded.source,
+      error_message = excluded.error_message
   `).run(
     evaluationId,
     taskType,
@@ -16,7 +52,9 @@ function saveEvaluation({ evaluationId, taskType, month, inputSummary, result, c
     JSON.stringify(inputSummary || {}),
     JSON.stringify(result || {}),
     confidence || 0,
-    txHash || null
+    txHash || null,
+    source || '',
+    errorMessage || ''
   );
 }
 
@@ -28,11 +66,7 @@ function getEvaluation(evaluationId) {
     'SELECT * FROM genlayer_evaluations WHERE evaluation_id = ?'
   ).get(evaluationId);
 
-  if (row) {
-    row.input_summary = JSON.parse(row.input_summary_json || '{}');
-    row.result = JSON.parse(row.result_json || '{}');
-  }
-  return row;
+  return hydrate(row);
 }
 
 /**
@@ -45,11 +79,7 @@ function getLatestByType(taskType, month) {
     ORDER BY created_at DESC LIMIT 1
   `).get(taskType, month);
 
-  if (row) {
-    row.input_summary = JSON.parse(row.input_summary_json || '{}');
-    row.result = JSON.parse(row.result_json || '{}');
-  }
-  return row;
+  return hydrate(row);
 }
 
 module.exports = {

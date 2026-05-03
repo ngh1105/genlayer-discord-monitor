@@ -4,6 +4,7 @@ const { getDb, closeDb } = require('./db/connection');
 const { handleMessage } = require('./events/message-handler');
 const { handleInteraction } = require('./commands/handler');
 const { initJobs } = require('./jobs/scheduler');
+const { startWebDashboard } = require('./web/server');
 
 // ─── Validate Config ───
 if (!config.DISCORD_TOKEN) {
@@ -16,6 +17,11 @@ if (!config.DISCORD_TOKEN) {
 console.log('Initializing database...');
 const db = getDb();
 console.log('Database ready.');
+
+let webServer = null;
+if (config.WEB_DASHBOARD_ENABLED) {
+  webServer = startWebDashboard();
+}
 
 // ─── Create Discord Client ───
 const client = new Client({
@@ -57,6 +63,7 @@ client.on('interactionCreate', async (interaction) => {
 // ─── Graceful Shutdown ───
 function shutdown(signal) {
   console.log(`\n${signal} received. Shutting down...`);
+  if (webServer) webServer.close();
   client.destroy();
   closeDb();
   process.exit(0);

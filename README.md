@@ -80,7 +80,8 @@ GenLayer Contract
 │   ├── events/
 │   ├── jobs/
 │   ├── repositories/
-│   └── services/
+│   ├── services/
+│   └── web/
 ├── test/
 │   └── smoke.js
 ├── .env.example
@@ -238,6 +239,12 @@ GENLAYER_RPC_URL=http://localhost:4000/api
 GENLAYER_PRIVATE_KEY=
 NOMI_SINGULARITY_CONTRACT_ADDRESS=
 
+WEB_DASHBOARD_ENABLED=false
+WEB_PORT=3000
+WEB_BIND_HOST=127.0.0.1
+WEB_PUBLIC_URL=
+WEB_ADMIN_TOKEN=
+
 ADMIN_ALERT_CHANNEL_ID=
 PROJECT_POST_CHANNEL_IDS=
 WINNER_ANNOUNCEMENT_CHANNEL_IDS=
@@ -292,11 +299,36 @@ Development mode:
 npm run dev
 ```
 
+Dashboard-only development mode:
+
+```bash
+npm run dashboard:dev
+```
+
 Deploy Discord slash commands:
 
 ```bash
 npm run deploy:commands
 ```
+
+## Web Dashboard
+
+The dashboard is disabled by default. To run the view-only monitoring UI from the same Node process as the bot, set:
+
+```env
+WEB_DASHBOARD_ENABLED=true
+WEB_PORT=3000
+WEB_BIND_HOST=127.0.0.1
+WEB_ADMIN_TOKEN=replace-with-a-secret-token
+```
+
+Then start the bot and open:
+
+```text
+http://localhost:3000/login
+```
+
+The token is required for the HTML page, static assets, and all `/api/dashboard/*` endpoints. The dashboard reads from the existing SQLite database and does not approve proofs, award bonuses, or run Nomi Singularity transactions. For public HTTPS deployments, set `WEB_PUBLIC_URL` so the dashboard cookie can be marked secure.
 
 ## Tests
 
@@ -306,12 +338,20 @@ Run the smoke test:
 npm test
 ```
 
+Run syntax checks and tests:
+
+```bash
+npm run check
+```
+
 The smoke test checks:
 
 - monthly post aggregation
 - ISO week rollover handling
 - monthly contest point aggregation
 - approved admin bonus points
+- dashboard data and HTTP auth behavior
+- Nomi and dashboard ranking parity
 
 ## Contract Validation
 

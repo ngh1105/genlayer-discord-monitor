@@ -31,6 +31,14 @@ function normalizePrivateKey(privateKey) {
   return privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
 }
 
+function hasStoredResult(evaluation) {
+  return Boolean(evaluation && Object.keys(evaluation.result || {}).length > 0);
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 class GenLayerClient {
   constructor() {
     this.network = config.GENLAYER_NETWORK;
@@ -49,32 +57,68 @@ class GenLayerClient {
     if (!this.isConfigured()) {
       throw new Error('GenLayer is not configured.');
     }
-    const txHash = await this._write('select_winner', [evaluationId, candidatesPayload]);
-    const result = await this._view('get_evaluation', [evaluationId]);
-    const parsed = parseEvaluationResult(result);
+    const existing = evaluationsRepo.getEvaluation(evaluationId);
+    if (hasStoredResult(existing)) return existing.result;
 
-    evaluationsRepo.saveEvaluation({
-      evaluationId, taskType: 'select_winner',
-      month: candidatesPayload.month || '',
-      inputSummary: candidatesPayload, result: parsed,
-      confidence: parsed.confidence || 0, txHash,
-    });
-    return parsed;
+    let txHash = null;
+    try {
+      txHash = await this._write('select_winner', [evaluationId, candidatesPayload]);
+      const parsed = await this._readEvaluationWithRetry(evaluationId);
+
+      evaluationsRepo.saveEvaluation({
+        evaluationId, taskType: 'select_winner',
+        month: candidatesPayload.month || '',
+        inputSummary: candidatesPayload, result: parsed,
+        confidence: parsed.confidence || 0, txHash,
+        source: 'genlayer',
+      });
+      return parsed;
+    } catch (err) {
+      evaluationsRepo.saveEvaluation({
+        evaluationId, taskType: 'select_winner',
+        month: candidatesPayload.month || '',
+        inputSummary: candidatesPayload,
+        result: {},
+        confidence: 0,
+        txHash,
+        source: 'genlayer',
+        errorMessage: err.message,
+      });
+      throw err;
+    }
   }
 
   async evaluatePost(evaluationId, postPayload) {
     if (!this.isConfigured()) throw new Error('GenLayer is not configured.');
-    const txHash = await this._write('evaluate_post', [evaluationId, postPayload]);
-    const result = await this._view('get_evaluation', [evaluationId]);
-    const parsed = parseEvaluationResult(result);
+    const existing = evaluationsRepo.getEvaluation(evaluationId);
+    if (hasStoredResult(existing)) return existing.result;
 
-    evaluationsRepo.saveEvaluation({
-      evaluationId, taskType: 'evaluate_post',
-      month: postPayload.week ? postPayload.week.substring(0, 7) : '',
-      inputSummary: postPayload, result: parsed,
-      confidence: parsed.quality_score || 0, txHash,
-    });
-    return parsed;
+    let txHash = null;
+    try {
+      txHash = await this._write('evaluate_post', [evaluationId, postPayload]);
+      const parsed = await this._readEvaluationWithRetry(evaluationId);
+
+      evaluationsRepo.saveEvaluation({
+        evaluationId, taskType: 'evaluate_post',
+        month: postPayload.week ? postPayload.week.substring(0, 7) : '',
+        inputSummary: postPayload, result: parsed,
+        confidence: parsed.quality_score || 0, txHash,
+        source: 'genlayer',
+      });
+      return parsed;
+    } catch (err) {
+      evaluationsRepo.saveEvaluation({
+        evaluationId, taskType: 'evaluate_post',
+        month: postPayload.week ? postPayload.week.substring(0, 7) : '',
+        inputSummary: postPayload,
+        result: {},
+        confidence: 0,
+        txHash,
+        source: 'genlayer',
+        errorMessage: err.message,
+      });
+      throw err;
+    }
   }
 
   async getEvaluation(evaluationId) {
@@ -123,6 +167,23 @@ class GenLayerClient {
     });
 
     return txHash;
+  }
+
+  async _readEvaluationWithRetry(evaluationId, attempts = 6) {
+    let lastError = null;
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      try {
+        const result = await this._view('get_evaluation', [evaluationId]);
+        const parsed = parseEvaluationResult(result);
+        if (Object.keys(parsed).length > 0) return parsed;
+      } catch (err) {
+        lastError = err;
+      }
+      await sleep(2000);
+    }
+
+    if (lastError) throw lastError;
+    throw new Error(`GenLayer evaluation ${evaluationId} was not readable after transaction acceptance.`);
   }
 
   async _view(method, args) {

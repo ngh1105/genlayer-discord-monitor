@@ -117,6 +117,8 @@ CREATE TABLE IF NOT EXISTS genlayer_evaluations (
   result_json TEXT DEFAULT '{}',
   confidence INTEGER NOT NULL DEFAULT 0,
   tx_hash TEXT,
+  source TEXT NOT NULL DEFAULT '',
+  error_message TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
