@@ -259,6 +259,12 @@ npm run demo:seed
 
 See [Demo Guide](docs/demo-guide.md) for the reviewer walkthrough and screenshot checklist.
 
+## Demo Screenshots
+
+![Dashboard summary](docs/assets/dashboard-summary.png)
+![Dashboard proofs](docs/assets/dashboard-proofs.png)
+![Dashboard GenLayer](docs/assets/dashboard-genlayer.png)
+
 ## Environment Variables
 
 ```env
