@@ -22,7 +22,7 @@ module.exports = {
 
   // Web dashboard
   WEB_DASHBOARD_ENABLED: process.env.WEB_DASHBOARD_ENABLED === 'true',
-  WEB_PORT: parseInt(process.env.WEB_PORT || '3000', 10),
+  WEB_PORT: parseInt(process.env.WEB_PORT || process.env.PORT || '3000', 10),
   WEB_BIND_HOST: process.env.WEB_BIND_HOST || '127.0.0.1',
   WEB_PUBLIC_URL: process.env.WEB_PUBLIC_URL || '',
   WEB_ADMIN_TOKEN: process.env.WEB_ADMIN_TOKEN || '',

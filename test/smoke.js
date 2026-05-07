@@ -167,6 +167,10 @@ async function main() {
   const previousToken = config.WEB_ADMIN_TOKEN;
   config.WEB_ADMIN_TOKEN = '';
   await withServer(createWebDashboardApp(), async (server) => {
+    const health = await request(server, { path: '/healthz' });
+    assert.strictEqual(health.statusCode, 200);
+    assert.strictEqual(JSON.parse(health.body).ok, true);
+
     const res = await request(server, { path: '/api/dashboard/summary?month=2026-05' });
     assert.strictEqual(res.statusCode, 503);
   });
@@ -175,6 +179,14 @@ async function main() {
   await withServer(createWebDashboardApp(), async (server) => {
     const unauth = await request(server, { path: '/api/dashboard/summary?month=2026-05' });
     assert.strictEqual(unauth.statusCode, 401);
+
+    const badLogin = await request(server, {
+      method: 'POST',
+      path: '/login',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'token=bad-token',
+    });
+    assert.strictEqual(badLogin.statusCode, 401);
 
     const login = await request(server, {
       method: 'POST',
@@ -191,6 +203,15 @@ async function main() {
     });
     assert.strictEqual(html.statusCode, 200);
     assert.ok(html.body.includes('GenLayer Monitor'));
+    assert.ok(html.body.includes('Logout'));
+
+    const logout = await request(server, {
+      method: 'POST',
+      path: '/logout',
+      headers: { Cookie: login.headers['set-cookie'][0].split(';')[0] },
+    });
+    assert.strictEqual(logout.statusCode, 302);
+    assert.ok(logout.headers['set-cookie']?.some(cookie => cookie.includes('dashboard_token=')));
 
     const authedHeaders = { Authorization: 'Bearer test-token' };
     for (const endpoint of [

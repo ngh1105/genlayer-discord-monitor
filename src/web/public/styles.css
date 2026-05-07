@@ -173,6 +173,25 @@ button#refreshButton:hover {
   background: var(--accent-strong);
 }
 
+.filters form {
+  margin: 0;
+}
+
+.secondary-button {
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.secondary-button:hover {
+  background: var(--surface-muted);
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(140px, 1fr)) minmax(220px, 1.6fr);

@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: genlayer-discord-monitor
+    env: docker
+    plan: starter
+    autoDeploy: false
+    healthCheckPath: /healthz
+    disk:
+      name: monitor-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /app/data/monitor.db
+      - key: WEB_DASHBOARD_ENABLED
+        value: "true"
+      - key: WEB_BIND_HOST
+        value: 0.0.0.0
+      - key: WEB_PUBLIC_URL
+        sync: false
+      - key: WEB_ADMIN_TOKEN
+        sync: false
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_GUILD_ID
+        sync: false
+      - key: GENLAYER_NETWORK
+        sync: false
+      - key: GENLAYER_RPC_URL
+        sync: false
+      - key: GENLAYER_PRIVATE_KEY
+        sync: false
+      - key: NOMI_SINGULARITY_CONTRACT_ADDRESS
+        sync: false

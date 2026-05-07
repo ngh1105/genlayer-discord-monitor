@@ -1,0 +1,11 @@
+.git
+.github
+node_modules
+data
+.env
+*.db
+*.db-shm
+*.db-wal
+__pycache__
+*.pyc
+npm-debug.log

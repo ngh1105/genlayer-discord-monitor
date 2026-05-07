@@ -1,7 +1,12 @@
 const express = require('express');
 const path = require('path');
 const config = require('../config');
+const { getDb } = require('../db/connection');
 const dashboard = require('./dashboard-data');
+
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const LOGIN_MAX_FAILURES = 8;
+const loginFailures = new Map();
 
 function parseCookies(cookieHeader) {
   if (!cookieHeader) return {};
@@ -27,6 +32,40 @@ function cookieOptions() {
     secure,
     maxAge: 12 * 60 * 60 * 1000,
   };
+}
+
+function clearCookieOptions() {
+  const { maxAge, ...options } = cookieOptions();
+  return options;
+}
+
+function getClientKey(req) {
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+function getFailureRecord(req) {
+  const key = getClientKey(req);
+  const now = Date.now();
+  const record = loginFailures.get(key);
+  if (!record || now - record.firstSeen > LOGIN_WINDOW_MS) {
+    const fresh = { count: 0, firstSeen: now };
+    loginFailures.set(key, fresh);
+    return fresh;
+  }
+  return record;
+}
+
+function isLoginRateLimited(req) {
+  return getFailureRecord(req).count >= LOGIN_MAX_FAILURES;
+}
+
+function recordLoginFailure(req) {
+  const record = getFailureRecord(req);
+  record.count += 1;
+}
+
+function clearLoginFailures(req) {
+  loginFailures.delete(getClientKey(req));
 }
 
 function requireDashboardToken(req, res, next) {
@@ -96,6 +135,24 @@ function createWebDashboardApp() {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
+  app.get('/healthz', (_req, res) => {
+    try {
+      getDb().prepare('SELECT 1').get();
+      res.json({
+        ok: true,
+        service: 'genlayer-discord-monitor',
+        dashboard: true,
+        uptime_seconds: Math.round(process.uptime()),
+      });
+    } catch (err) {
+      res.status(500).json({
+        ok: false,
+        service: 'genlayer-discord-monitor',
+        error: err.message,
+      });
+    }
+  });
+
   app.get('/login', (_req, res) => {
     res.type('html').send(loginPage());
   });
@@ -104,12 +161,28 @@ function createWebDashboardApp() {
     if (!config.WEB_ADMIN_TOKEN) {
       return res.status(503).type('html').send(loginPage('WEB_ADMIN_TOKEN is not configured.'));
     }
+    if (isLoginRateLimited(req)) {
+      console.warn(`[Dashboard] Rate limited login attempt from ${getClientKey(req)}`);
+      return res.status(429).type('html').send(loginPage('Too many invalid attempts. Try again later.'));
+    }
     if (req.body?.token !== config.WEB_ADMIN_TOKEN) {
       console.warn('[Dashboard] Failed login attempt');
+      recordLoginFailure(req);
       return res.status(401).type('html').send(loginPage('Invalid dashboard token.'));
     }
+    clearLoginFailures(req);
     res.cookie('dashboard_token', req.body.token, cookieOptions());
     return res.redirect('/');
+  });
+
+  app.post('/logout', (_req, res) => {
+    res.clearCookie('dashboard_token', clearCookieOptions());
+    return res.redirect('/login');
+  });
+
+  app.get('/logout', (_req, res) => {
+    res.clearCookie('dashboard_token', clearCookieOptions());
+    return res.redirect('/login');
   });
 
   app.use(requireDashboardToken);

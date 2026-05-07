@@ -67,26 +67,32 @@ GenLayer Contract
 
 ```text
 .
-├── contracts/
-│   └── nomi_singularity.py
-├── docs/
-│   ├── build-and-run.md
-│   ├── genlayer-contract.md
-│   ├── genlayer-discord-monitoring-system.md
-│   └── project-structure.svg
-├── src/
-│   ├── commands/
-│   ├── db/
-│   ├── events/
-│   ├── jobs/
-│   ├── repositories/
-│   ├── services/
-│   └── web/
-├── test/
-│   └── smoke.js
-├── .env.example
-├── package.json
-└── README.md
++-- contracts/
+|   +-- nomi_singularity.py
++-- docs/
+|   +-- build-and-run.md
+|   +-- demo-guide.md
+|   +-- genlayer-contract.md
+|   +-- genlayer-discord-monitoring-system.md
+|   +-- ops-checklist.md
+|   +-- project-structure.svg
++-- src/
+|   +-- commands/
+|   +-- db/
+|   |   +-- seed-demo.js
+|   +-- events/
+|   +-- jobs/
+|   +-- repositories/
+|   +-- services/
+|   +-- web/
++-- test/
+|   +-- check-syntax.js
+|   +-- smoke.js
++-- Dockerfile
++-- .env.example
++-- package.json
++-- render.yaml
++-- README.md
 ```
 
 ## Core Workflow
@@ -225,6 +231,34 @@ Copy-Item .env.example .env
 
 Fill in the required Discord and GenLayer values in `.env`.
 
+## Demo Quickstart
+
+To review the project without a real Discord server or GenLayer private key, run:
+
+```bash
+npm run demo:dashboard
+```
+
+This creates `./data/demo-monitor.db`, seeds representative contribution data, and starts the dashboard at:
+
+```text
+http://127.0.0.1:3000/login
+```
+
+Default demo token:
+
+```text
+dev-dashboard-token
+```
+
+To seed only:
+
+```bash
+npm run demo:seed
+```
+
+See [Demo Guide](docs/demo-guide.md) for the reviewer walkthrough and screenshot checklist.
+
 ## Environment Variables
 
 ```env
@@ -305,6 +339,18 @@ Dashboard-only development mode:
 npm run dashboard:dev
 ```
 
+Dashboard demo mode with seeded sample data:
+
+```bash
+npm run demo:dashboard
+```
+
+Refresh demo data without starting a server:
+
+```bash
+npm run demo:seed
+```
+
 Deploy Discord slash commands:
 
 ```bash
@@ -328,7 +374,30 @@ Then start the bot and open:
 http://localhost:3000/login
 ```
 
-The token is required for the HTML page, static assets, and all `/api/dashboard/*` endpoints. The dashboard reads from the existing SQLite database and does not approve proofs, award bonuses, or run Nomi Singularity transactions. For public HTTPS deployments, set `WEB_PUBLIC_URL` so the dashboard cookie can be marked secure.
+The token is required for the HTML page, static assets, and all `/api/dashboard/*` endpoints. The dashboard stores the token in an HTTP-only cookie after login, supports logout, and throttles repeated invalid login attempts in memory. It reads from the existing SQLite database and does not approve proofs, award bonuses, or run Nomi Singularity transactions. For public HTTPS deployments, set `WEB_PUBLIC_URL` so the dashboard cookie can be marked secure.
+
+For Docker or Render, the app also honors the platform `PORT` value when `WEB_PORT` is not set. Use `/healthz` as a lightweight health check path.
+
+## Deploy
+
+Docker build:
+
+```bash
+docker build -t genlayer-discord-monitor .
+```
+
+Render deployment can start from the included `render.yaml` blueprint. Before deploying, configure the required secret environment variables in Render:
+
+- `DISCORD_TOKEN`
+- `DISCORD_CLIENT_ID`
+- `DISCORD_GUILD_ID`
+- `WEB_ADMIN_TOKEN`
+- `WEB_PUBLIC_URL`
+- `GENLAYER_RPC_URL`
+- `NOMI_SINGULARITY_CONTRACT_ADDRESS`
+- `GENLAYER_PRIVATE_KEY`, only if the deployed bot should write to GenLayer
+
+The Render blueprint mounts `/app/data` for SQLite persistence and enables the dashboard so `/healthz` can be used for health checks.
 
 ## Tests
 
@@ -505,9 +574,11 @@ Most routine metrics are deterministic and stored locally. GenLayer is used only
 
 ## Documentation
 
+- [Demo Guide](docs/demo-guide.md)
 - [System Design](docs/genlayer-discord-monitoring-system.md)
 - [GenLayer Contract](docs/genlayer-contract.md)
 - [Build and Run Guide](docs/build-and-run.md)
+- [Operations Checklist](docs/ops-checklist.md)
 - [Project Structure Image](docs/project-structure.svg)
 
 ## Security Notes
